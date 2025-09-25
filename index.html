@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Basic Page Needs -->
+    <meta charset="UTF-8">
+    <title>Scroll City</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Experience Scroll City, an interactive, procedurally generated cyberpunk cityscape. Control the scroll speed, direction, city density, and visual effects to create your own futuristic metropolis.">
+    <meta name="keywords" content="Scroll City, cyberpunk, futuristic, city, procedural generation, interactive art, canvas animation, javascript">
+    <meta name="author" content="Chris Pirillo">
+    <link rel="canonical" href="https://pirillo.com/arcade/scroll-city.html">
+
+    <!-- Open Graph / Facebook Meta Tags -->
+    <meta property="og:title" content="Scroll City">
+    <meta property="og:description" content="An interactive, procedurally generated cyberpunk cityscape that scrolls endlessly. Customize the speed, density, and complexity of your futuristic metropolis.">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/scroll-city.png">
+    <meta property="og:url" content="https://pirillo.com/arcade/scroll-city.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Pirillo's Arcade">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:creator" content="@ChrisPirillo">
+    <meta name="twitter:title" content="Scroll City">
+    <meta name="twitter:description" content="An interactive, procedurally generated cyberpunk cityscape that scrolls endlessly. Customize the speed, density, and complexity of your futuristic metropolis.">
+    <meta name="twitter:image" content="https://pirillo.com/arcade/images/scroll-city.png">
+
+    <!-- Performance Resource Hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap"></noscript>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Scroll City",
+      "url": "https://pirillo.com/arcade/scroll-city.html",
+      "image": "https://pirillo.com/arcade/images/scroll-city.png",
+      "description": "An interactive, procedurally generated cyberpunk cityscape that scrolls endlessly. Customize the speed, density, and complexity of your futuristic metropolis.",
+      "abstract": "Control a scrolling cyberpunk city visualization with adjustable parameters for speed, density, complexity, and visual effects.",
+      "applicationCategory": "Game",
+      "genre": ["Simulation", "Indie"],
+      "operatingSystem": "All",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://chris.pirillo.com/"
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Chris Pirillo"
+      },
+      "keywords": "Scroll City, cyberpunk, futuristic, city, procedural generation, interactive art, canvas animation, javascript game, Chris Pirillo, arcade"
+    }
+    </script>
+
+    <style>
+        /* CSS has been left untouched as requested to preserve layout and functionality. */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #00000a;
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            user-select: none; /* Prevents text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        canvas {
+            display: block;
+        }
+        
+        /* --- Settings Menu --- */
+        .menu-icon {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 30px;
+            height: 22px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: transform 0.3s ease;
+        }
+        .menu-icon:hover {
+            transform: scale(1.1);
+        }
+        .menu-icon span {
+            display: block;
+            position: absolute;
+            height: 3px;
+            width: 100%;
+            background: #00ffff;
+            border-radius: 3px;
+            opacity: 1;
+            left: 0;
+            transform-origin: left center;
+            transition: all .25s ease-in-out;
+            box-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
+        }
+        .menu-icon span:nth-child(1) { top: 0px; }
+        .menu-icon span:nth-child(2) { top: 9px; }
+        .menu-icon span:nth-child(3) { top: 18px; }
+
+        .settings-panel.open ~ .menu-icon span:nth-child(1) {
+            transform: rotate(45deg);
+            top: -2px;
+            left: 4px;
+        }
+        .settings-panel.open ~ .menu-icon span:nth-child(2) {
+            width: 0%;
+            opacity: 0;
+        }
+        .settings-panel.open ~ .menu-icon span:nth-child(3) {
+            transform: rotate(-45deg);
+            top: 19px;
+            left: 4px;
+        }
+
+        .settings-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100%;
+            background: rgba(5, 0, 20, 0.85);
+            backdrop-filter: blur(8px);
+            border-right: 2px solid #00ffff;
+            padding: 20px;
+            padding-top: 80px;
+            box-sizing: border-box;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+        .settings-panel h2 {
+            position: absolute;
+            top: 20px;
+            left: 65px;
+            height: 22px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00ffff;
+            text-shadow: 0 0 8px #00ffff;
+            letter-spacing: 4px;
+        }
+        .setting {
+            margin-bottom: 25px;
+        }
+        .setting label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            text-shadow: 0 0 3px #fff;
+        }
+        .setting .direction-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        .setting .direction-buttons button {
+            width: 48%;
+            padding: 8px;
+            font-family: 'Orbitron', sans-serif;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .setting .direction-buttons button.active {
+            background: #00ffff;
+            color: #050014;
+            box-shadow: 0 0 15px #00ffff;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 255, 255, 0.2);
+            outline: none;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff00ff;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+            transition: transform 0.2s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+        Semantic HTML structure has been added using <header> and <main> 
+        without altering the visual layout. Elements used by the script 
+        (e.g., #settings-panel, #menu-toggle) retain their original tags and IDs.
+    -->
+    <header>
+        <aside id="settings-panel" class="settings-panel">
+            <h2>SCROLL CITY</h2>
+            <div class="setting">
+                <label for="speed">Scroll Speed: <span id="speed-value">0.5</span></label>
+                <input type="range" id="speed" min="0.1" max="5" step="0.1" value="0.5">
+            </div>
+            <div class="setting">
+                 <label>Scroll Direction:</label>
+                 <div class="direction-buttons">
+                    <button id="scroll-left" class="active">&lt;&lt; Left</button>
+                    <button id="scroll-right">Right &gt;&gt;</button>
+                 </div>
+            </div>
+            <div class="setting">
+                <label for="density">City Density: <span id="density-value">0.8</span></label>
+                <input type="range" id="density" min="0.2" max="1.5" step="0.1" value="0.8">
+            </div>
+            <div class="setting">
+                <label for="complexity">Building Complexity: <span id="complexity-value">4</span></label>
+                <input type="range" id="complexity" min="1" max="8" step="1" value="4">
+            </div>
+            <div class="setting">
+                <label for="starCount">Star Count: <span id="starCount-value">210</span></label>
+                <input type="range" id="starCount" min="0" max="500" step="10" value="210">
+            </div>
+            <div class="setting">
+                <label for="fogDensity">Fog Density: <span id="fogDensity-value">0.7</span></label>
+                <input type="range" id="fogDensity" min="0" max="1" step="0.1" value="0.7">
+            </div>
+            <div class="setting">
+                <label for="glowIntensity">Glow Intensity: <span id="glowIntensity-value">8</span></label>
+                <input type="range" id="glowIntensity" min="0" max="20" step="1" value="8">
+            </div>
+            <div class="setting">
+                <label for="carCount">Flying Cars: <span id="carCount-value">50</span></label>
+                <input type="range" id="carCount" min="0" max="200" step="5" value="50">
+            </div>
+        </aside>
+        <div id="menu-toggle" class="menu-icon" role="button" aria-label="Toggle settings menu" tabindex="0">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+    
+    <main>
+        <canvas id="cityCanvas" aria-label="An animation of a scrolling futuristic cityscape at night."></canvas>
+    </main>
+
+    <!-- 
+      PRODUCTION NOTE: The following script has been left completely untouched as per the instructions.
+      It is placed at the end of the body to ensure the DOM is fully parsed before execution,
+      which is a standard practice for preventing render-blocking.
+    -->
+    <script>
+        const canvas = document.getElementById('cityCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let layers;
+        const colors = {
+            stars: '#ffffff',
+            windowColors: ['#ff00ff', '#00ffff', '#ffeeaa', '#00ff00', '#ff8800', '#ffff00', '#4488ff', '#ff2222', '#ffcc00', '#55ff55'],
+            windowColorsRgb: {
+                '#ff00ff': {r:255, g:0, b:255},
+                '#00ffff': {r:0, g:255, b:255},
+                '#ffeeaa': {r:255, g:238, b:170},
+                '#00ff00': {r:0, g:255, b:0},
+                '#ff8800': {r:255, g:136, b:0},
+                '#ffff00': {r:255, g:255, b:0},
+                '#4488ff': {r:68, g:136, b:255},
+                '#ff2222': {r:255, g:34, b:34},
+                '#ffcc00': {r:255, g:204, b:0},
+                '#55ff55': {r:85, g:255, b:85},
+            }
+        };
+        
+        let settings = {
+            density: 0.8,
+            baseSpeed: 0.5,
+            complexity: 4,
+            starCount: 210,
+            fogDensity: 0.7,
+            glowIntensity: 8,
+            carCount: 50,
+            scrollDirection: 1, // 1 for left, -1 for right
+        };
+
+        function hexToRgb(hex) {
+            let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        function blendColors(color1, color2, weight) {
+            const c1 = hexToRgb(color1);
+            const c2 = hexToRgb(color2);
+            if (!c1 || !c2) return color1;
+            const r = Math.round(c1.r * (1 - weight) + c2.r * weight);
+            const g = Math.round(c1.g * (1 - weight) + c2.g * weight);
+            const b = Math.round(c1.b * (1 - weight) + c2.b * weight);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function varyColor(hex) {
+            let { r, g, b } = hexToRgb(hex);
+            r = Math.max(0, Math.min(255, r + Math.floor((Math.random() - 0.5) * 30)));
+            g = Math.max(0, Math.min(255, g + Math.floor((Math.random() - 0.5) * 30)));
+            b = Math.max(0, Math.min(255, b + Math.floor((Math.random() - 0.5) * 30)));
+            return rgbToHex(r, g, b);
+        }
+
+        class Star {
+            constructor(speed) {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height * 0.7;
+                this.size = Math.random() * 0.8 + 0.2;
+                this.speed = speed;
+                this.alpha = 0.5 + Math.random() * 0.5;
+            }
+            draw(targetCtx) {
+                targetCtx.globalAlpha = this.alpha;
+                targetCtx.fillStyle = colors.stars;
+                targetCtx.beginPath();
+                targetCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                targetCtx.fill();
+            }
+            update(baseSpeed) {
+                this.x -= this.speed * baseSpeed * settings.scrollDirection;
+                if (settings.scrollDirection > 0 && this.x < 0) {
+                    this.x = width;
+                    this.y = Math.random() * height * 0.7;
+                } else if (settings.scrollDirection < 0 && this.x > width) {
+                    this.x = 0;
+                    this.y = Math.random() * height * 0.7;
+                }
+            }
+        }
+        
+        class FlyingCar {
+            constructor(numLayers) {
+                this.numLayers = numLayers;
+                this.layer = Math.floor(Math.random() * (this.numLayers - 1));
+                this.speedFactor = ((this.layer + 1) / this.numLayers) * (Math.random() * 0.5 + 0.8);
+                this.reset(true); // Initial spawn
+            }
+            reset(isInitialSpawn = false) {
+                this.isWaiting = true;
+                this.respawnTimer = isInitialSpawn ? Math.random() * 8000 : Math.random() * 4000 + 1000;
+
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.y = height * (0.3 + Math.random() * 0.6);
+                this.x = this.direction > 0 ? -40 : width + 40;
+                this.length = (10 + Math.random() * 20) * this.speedFactor;
+                this.color = Math.random() > 0.5 ? '#ff8888' : '#bbffff';
+            }
+            update(deltaTime, baseSpeed, layerScrollSpeed) {
+                if (this.isWaiting) {
+                    this.respawnTimer -= deltaTime;
+                    if (this.respawnTimer <= 0) {
+                        this.isWaiting = false;
+                    }
+                    return;
+                }
+
+                const carAbsoluteSpeed = this.speedFactor * baseSpeed * this.direction * 5;
+                const parallaxSpeed = layerScrollSpeed * settings.scrollDirection;
+                const normalizedDelta = deltaTime / 16.67;
+                this.x += (carAbsoluteSpeed - parallaxSpeed) * normalizedDelta;
+
+                if ((this.direction > 0 && this.x > width + this.length) || (this.direction < 0 && this.x < -this.length)) {
+                    this.reset();
+                }
+            }
+            draw() {
+                if(this.isWaiting) return;
+
+                ctx.save();
+                ctx.globalAlpha = this.speedFactor;
+                ctx.strokeStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
+                ctx.lineWidth = Math.max(1.5, 3 * this.speedFactor);
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.length * this.direction, this.y);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        class Building {
+            constructor(x, totalWidth, maxHeight, bodyColor, windowColorSeed, distanceFactor) {
+                this.x = x;
+                this.width = totalWidth;
+                this.bodyColor = bodyColor;
+                this.windowColorSeed = windowColorSeed;
+                this.distanceFactor = distanceFactor;
+                // --- FIX --- Increased lighting density for more vibrant buildings
+                this.lightingDensity = Math.random() * 0.3 + 0.6; // Range: 0.6 to 0.9
+                this.parts = [];
+                this.windows = [];
+                this.generateStructure(x, totalWidth, maxHeight);
+                if(this.windowColorSeed !== null) this.createWindows();
+            }
+            
+            generateStructure(startX, totalWidth, maxHeight) {
+                const archetypes = ['complex', 'tower', 'pyramid', 'arcology', 'twinTower'];
+                const archetype = archetypes[Math.floor(Math.random() * archetypes.length)];
+                
+                this.parts = [];
+
+                switch(archetype) {
+                    case 'pyramid':
+                        this.generatePyramid(startX, totalWidth, maxHeight);
+                        break;
+                    case 'arcology':
+                        this.generateArcology(startX, totalWidth, maxHeight);
+                        break;
+                    case 'twinTower':
+                        this.generateTwinTower(startX, totalWidth, maxHeight);
+                        break;
+                    case 'tower':
+                        this.generateTower(startX, totalWidth, maxHeight);
+                        break;
+                    case 'complex':
+                    default:
+                        this.generateComplex(startX, totalWidth, maxHeight);
+                        break;
+                }
+                
+                let highestY = height;
+                let topPart = null;
+                this.parts.forEach(p => {
+                    if (p.y < highestY) {
+                        highestY = p.y;
+                        topPart = p;
+                    }
+                });
+                if (topPart) {
+                    topPart.isTop = true;
+                }
+            }
+
+            generatePyramid(startX, totalWidth, maxHeight) {
+                let currentH = Math.random() * (maxHeight * 0.4) + (maxHeight * 0.6);
+                let currentW = totalWidth * (Math.random() * 0.2 + 0.7);
+                let currentX = startX + (totalWidth - currentW) / 2;
+                let currentY = height;
+                const segments = Math.floor(settings.complexity * (Math.random() * 0.5 + 0.8));
+
+                for (let i = 0; i < segments; i++) {
+                    if (currentH < 15) break;
+                    const segmentH = Math.max(15, currentH / (segments - i) * (Math.random() * 0.4 + 0.8));
+                    this.parts.push({ x: currentX, y: currentY - segmentH, w: currentW, h: segmentH });
+                    currentY -= segmentH;
+                    currentH -= segmentH;
+                    
+                    const newW = currentW * (0.7 + Math.random() * 0.1);
+                    currentX += (currentW - newW) / 2;
+                    currentW = newW;
+                }
+            }
+
+            generateArcology(startX, totalWidth, maxHeight) {
+                const baseHeight = Math.random() * (maxHeight * 0.2) + (maxHeight * 0.3);
+                const baseWidth = totalWidth * (Math.random() * 0.3 + 1.2);
+                const baseX = startX + (totalWidth - baseWidth) / 2;
+                this.parts.push({ x: baseX, y: height - baseHeight, w: baseWidth, h: baseHeight });
+
+                const towerHeight = Math.random() * (maxHeight * 0.4) + (maxHeight * 0.3);
+                const towerWidth = baseWidth * (Math.random() * 0.3 + 0.3);
+                const towerX = baseX + (baseWidth - towerWidth) / 2;
+                this.parts.push({ x: towerX, y: (height - baseHeight) - towerHeight, w: towerWidth, h: towerHeight });
+
+                if (Math.random() < 0.3) { // Chance for a skybridge
+                    const bridgeY = (height - baseHeight) - (towerHeight * (0.3 + Math.random() * 0.4));
+                    const bridgeH = 15;
+                    this.parts.push({ x: baseX, y: bridgeY, w: baseWidth, h: bridgeH });
+                }
+            }
+            
+            generateTwinTower(startX, totalWidth, maxHeight) {
+                const baseHeight = Math.random() * (maxHeight * 0.1) + (maxHeight * 0.15);
+                const baseWidth = totalWidth * (Math.random() * 0.2 + 0.7);
+                const baseX = startX + (totalWidth - baseWidth) / 2;
+                this.parts.push({x: baseX, y: height - baseHeight, w: baseWidth, h: baseHeight});
+
+                const towerHeight = Math.random() * (maxHeight * 0.6) + (maxHeight * 0.2);
+                const towerWidth = baseWidth * (Math.random() * 0.2 + 0.2); // Each tower is ~1/4 of the base
+                
+                const tower1X = baseX + baseWidth * 0.1;
+                const tower2X = baseX + baseWidth * 0.9 - towerWidth;
+
+                this.parts.push({x: tower1X, y: height - towerHeight, w: towerWidth, h: towerHeight - baseHeight});
+                this.parts.push({x: tower2X, y: height - towerHeight, w: towerWidth, h: towerHeight - baseHeight});
+            }
+
+            generateTower(startX, totalWidth, maxHeight) {
+                const mainHeight = Math.random() * (maxHeight * 0.5) + (maxHeight * 0.5);
+                const mainWidth = totalWidth * (Math.random() * 0.2 + 0.4);
+                const mainX = startX + (totalWidth - mainWidth) / 2;
+                this.parts.push({ x: mainX, y: height - mainHeight, w: mainWidth, h: mainHeight });
+                let topY = height - mainHeight;
+
+                if (Math.random() < 0.5) {
+                    const spireWidth = mainWidth * 0.2;
+                    const spireHeight = Math.random() * 80 + 50;
+                    const spireX = mainX + (mainWidth - spireWidth) / 2;
+                    this.parts.push({ x: spireX, y: topY - spireHeight, w: spireWidth, h: spireHeight, type: 'spire' });
+                }
+            }
+            
+            generateComplex(startX, totalWidth, maxHeight) {
+                const mainHeight = Math.random() * (maxHeight * 0.4) + (maxHeight * 0.6);
+                const mainWidth = totalWidth * (Math.random() * 0.3 + 0.6);
+                const mainX = startX + (totalWidth - mainWidth) / 2;
+                
+                let currentParts = [{ x: mainX, y: height - mainHeight, w: mainWidth, h: mainHeight }];
+
+                for(let i=0; i < settings.complexity; i++) {
+                    const lastPart = currentParts[currentParts.length-1];
+                    const newPartW = lastPart.w * (Math.random() * 0.6 + 0.5);
+                    const newPartH = (height - lastPart.y) * (Math.random() * 0.6 + 0.3);
+                    const newPartX = lastPart.x + (lastPart.w - newPartW) * Math.random();
+                    if (lastPart.y - newPartH < height - maxHeight) continue;
+                    currentParts.push({ x: newPartX, y: lastPart.y - newPartH, w: newPartW, h: newPartH });
+                }
+                this.parts = currentParts;
+            }
+
+
+            createWindows() {
+                const primaryColor = colors.windowColors[this.windowColorSeed];
+                const scale = Math.max(0.5, this.distanceFactor);
+
+                this.parts.forEach(part => {
+                    if (part.w < 5 || part.h < 10 || part.type === 'spire') return;
+                    
+                    // --- FIX --- Increased probability and relaxed height restriction for searchlights
+                    if (part.isTop && part.y < height * 0.55 && Math.random() < 0.9) { 
+                        const upwardAngle = (-5 * Math.PI / 6) + (Math.random() * (4 * Math.PI / 6));
+                        this.windows.push({type: 'searchlight', x: part.x + part.w/2, y: part.y, color: primaryColor, offset: upwardAngle});
+                        return;
+                    }
+                    if (part.isTop && part.h < 30 && part.h > 5 && Math.random() < 0.25) {
+                         this.windows.push({type:'landingpad', cx: part.x + part.w/2, cy: part.y, r: Math.min(part.w, part.h) * 0.4, color: '#ffaaaa' });
+                         return;
+                    }
+
+                    const windowType = Math.random();
+
+                    if (windowType < 0.35) { // Gridded
+                        const w_size = (Math.random() * 2 + 1.5) * scale;
+                        const h_size = (Math.random() * 3 + 2) * scale;
+                        const w_gap = (Math.random() * 5 + 4) * scale;
+                        const h_gap = (Math.random() * 6 + 5) * scale;
+                        for(let y = part.y + h_gap; y < part.y + part.h - h_size; y += h_size + h_gap) {
+                            for(let x = part.x + w_gap; x < part.x + part.w - w_size; x += w_size + w_gap) {
+                                if(Math.random() < this.lightingDensity) { 
+                                   const color = (Math.random() < 0.05) ? colors.windowColors[Math.floor(Math.random() * colors.windowColors.length)] : primaryColor;
+                                   this.windows.push({ x, y, w: w_size, h: h_size, color: color, flicker: Math.random() < 0.1, flickerOffset: Math.random() * 1000, brightness: Math.random() * 0.3 + 0.7 });
+                                }
+                            }
+                        }
+                    } else if (windowType < 0.5) { // Vertical strips
+                        const count = Math.floor(Math.random() * (part.w / (12 * scale))) + 1;
+                        for(let i=0; i<count; i++) {
+                            if(Math.random() < this.lightingDensity) {
+                                const strip_w = Math.max(1, (part.w / count) * (Math.random() * 0.1 + 0.05));
+                                const strip_x = part.x + (part.w/count) * i + ((part.w/count) - strip_w)/2;
+                                const strip_h = part.h * (Math.random() * 0.4 + 0.2);
+                                const strip_y = part.y + (part.h - strip_h) * Math.random();
+                                const color = (Math.random() < 0.05) ? colors.windowColors[Math.floor(Math.random() * colors.windowColors.length)] : primaryColor;
+                                this.windows.push({type: 'strip', x: strip_x, y: strip_y, w: strip_w, h: strip_h, color: color, flicker: Math.random() < 0.2, flickerOffset: Math.random() * 1000, brightness: Math.random() * 0.3 + 0.7 });
+                            }
+                        }
+                    } else if (windowType < 0.65) { // Horizontal Bands
+                        const bandCount = Math.floor(Math.random() * 3) + 1;
+                        for(let i=0; i<bandCount; i++) {
+                            const bandH = (Math.random() * 3 + 2) * scale;
+                            const bandY = part.y + (part.h * (0.1 + Math.random() * 0.8));
+                            this.windows.push({type:'band', x: part.x, y: bandY, w: part.w, h: bandH, color: primaryColor, flicker:true, flickerOffset: Math.random() * 1000, brightness: 1});
+                        }
+                    } else if (windowType < 0.75) { // Digital Rain
+                        const rainCount = Math.floor(part.w / 4);
+                        for(let i=0; i<rainCount; i++) {
+                             this.windows.push({type: 'rain', x: part.x + (i * 4) + 2, y: part.y, h: part.h, color: primaryColor, flickerOffset: Math.random() * 5000});
+                        }
+                    } else if (windowType < 0.85) { // Glitch Grid
+                        const glitchSize = Math.floor(Math.random() * 10) + 10;
+                        const glitchX = part.x + Math.random() * (part.w - glitchSize);
+                        const glitchY = part.y + Math.random() * (part.h - glitchSize);
+                        this.windows.push({type:'glitch', x:glitchX, y:glitchY, w:glitchSize, h:glitchSize, color:primaryColor, flickerOffset: Math.random() * 1000});
+                    }
+                    else if (windowType < 0.9) { // Penthouse Light
+                        if (part.h > 50) {
+                            const penthouseH = part.h * 0.1;
+                            this.windows.push({type:'band', x: part.x, y: part.y, w: part.w, h: penthouseH, color: '#ffffaa', flicker:false, brightness: 1});
+                        }
+                    } else { // Micro Clusters
+                        const clusterCount = Math.floor(Math.random() * 4) + 1;
+                        for(let i=0; i<clusterCount; i++) {
+                            const clusterX = part.x + Math.random() * (part.w - 20);
+                            const clusterY = part.y + Math.random() * (part.h - 20);
+                            for(let j=0; j<5; j++) {
+                                this.windows.push({ x: clusterX + Math.random() * 10, y: clusterY + Math.random() * 10, w: 1, h: 1, color: primaryColor, flicker: true, flickerOffset: Math.random() * 1000, brightness: 1 });
+                            }
+                        }
+                    }
+                });
+            }
+
+            draw(targetCtx) {
+                targetCtx.fillStyle = this.bodyColor;
+                
+                targetCtx.save();
+                targetCtx.beginPath();
+                this.parts.forEach(part => targetCtx.rect(part.x, part.y, part.w, part.h));
+                targetCtx.fill();
+                targetCtx.clip(); 
+
+                this.windows.forEach(win => {
+                    targetCtx.save();
+                    if (win.type === 'rain') {
+                        const rainProgress = ((Date.now() + win.flickerOffset) % 5000) / 5000;
+                        const y = win.y + (rainProgress * (win.h + 20)) - 20;
+                        const rgb = colors.windowColorsRgb[win.color];
+                        targetCtx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.8 * this.distanceFactor})`;
+                        targetCtx.shadowColor = win.color;
+                        targetCtx.shadowBlur = settings.glowIntensity * this.distanceFactor;
+                        targetCtx.fillRect(win.x, y, 2, 20);
+                    } else if (win.type === 'landingpad') {
+                        const pulse = (Math.sin(Date.now() / 500 + this.x) + 1) / 2;
+                        targetCtx.strokeStyle = win.color;
+                        targetCtx.shadowColor = win.color;
+                        targetCtx.shadowBlur = pulse * 15 * this.distanceFactor;
+                        targetCtx.lineWidth = (1 + pulse) * this.distanceFactor;
+                        targetCtx.globalAlpha = this.distanceFactor;
+                        targetCtx.beginPath();
+                        targetCtx.arc(win.cx, win.cy, win.r * pulse, 0, Math.PI * 2);
+                        targetCtx.stroke();
+                    } else if (win.type === 'glitch') {
+                        const time = Date.now() + win.flickerOffset;
+                        if (Math.sin(time/200) > 0.5) {
+                            for(let i=0; i<5; i++) {
+                                targetCtx.fillStyle = `rgba(255,255,255,${Math.random() * 0.1 * this.distanceFactor})`;
+                                targetCtx.fillRect(win.x + Math.random() * win.w, win.y, Math.random() * 2, win.h);
+                            }
+                            if (Math.sin(time/100) > 0) {
+                                targetCtx.fillStyle = win.color;
+                                targetCtx.globalAlpha = 0.8 * this.distanceFactor;
+                                targetCtx.fillRect(win.x, win.y, win.w, win.h);
+                            }
+                        }
+                    }
+                    else if (win.type === 'searchlight') {
+                        const sweepSpeed = 4000;
+                        const sweepRange = Math.PI / 2.5;
+                        const centerAngle = win.offset; 
+                        const angle = centerAngle + Math.sin(Date.now() / sweepSpeed) * (sweepRange / 2);
+
+                        const length = height * 0.9;
+                        const endX = win.x + Math.cos(angle) * length;
+                        const endY = win.y + Math.sin(angle) * length;
+                        const beam = targetCtx.createLinearGradient(win.x, win.y, endX, endY);
+                        const rgb = colors.windowColorsRgb[win.color];
+                        beam.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.30 * this.distanceFactor})`);
+                        beam.addColorStop(0.2, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.1 * this.distanceFactor})`);
+                        beam.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+                        
+                        targetCtx.beginPath();
+                        targetCtx.moveTo(win.x, win.y);
+                        targetCtx.lineTo(endX + 40 * this.distanceFactor, endY);
+                        targetCtx.lineTo(endX - 40 * this.distanceFactor, endY);
+                        targetCtx.closePath();
+                        targetCtx.fillStyle = beam;
+                        targetCtx.fill();
+                    }
+                     else { // Standard windows, strips, bands
+                        let baseAlpha = win.brightness || 1.0;
+                        if (win.flicker) baseAlpha *= 0.6 + (Math.sin(Date.now() / 200 + win.flickerOffset) + 1) / 2 * 0.4;
+                        const finalAlpha = baseAlpha * this.distanceFactor; // Apply distance fade
+                        const rgb = colors.windowColorsRgb[win.color];
+                        if (!rgb) return;
+                        targetCtx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${finalAlpha})`;
+                        targetCtx.shadowColor = win.color;
+                        targetCtx.shadowBlur = (Math.random() * 4 + settings.glowIntensity) * this.distanceFactor; // Apply distance fade to glow
+                        targetCtx.fillRect(win.x, win.y, win.w, win.h);
+                    }
+                    targetCtx.restore();
+                });
+                targetCtx.restore();
+            }
+        }
+
+        class Layer {
+            constructor(speedFactor, color, windowSeedChance, minHeight, maxHeight, minWidth, maxWidth, density) {
+                this.speedFactor = speedFactor;
+                this.color = color;
+                this.windowSeedChance = windowSeedChance;
+                this.minHeight = minHeight;
+                this.maxHeight = maxHeight;
+                this.minWidth = minWidth;
+                this.maxWidth = maxWidth;
+                this.density = density;
+                this.x = 0;
+                this.bufferCanvas = document.createElement('canvas');
+                this.bufferCtx = this.bufferCanvas.getContext('2d');
+                this.bufferWidth = width * 3; 
+                this.bufferCanvas.width = this.bufferWidth;
+                this.bufferCanvas.height = height;
+                this.init();
+            }
+
+            init() {
+                if (this.bufferWidth <= 0 || this.bufferCanvas.height <= 0) return;
+                this.bufferCtx.clearRect(0, 0, this.bufferWidth, height);
+                let currentX = 0;
+                while (currentX < this.bufferWidth) {
+                    const totalHeight = Math.random() * (this.maxHeight - this.minHeight) + this.minHeight;
+                    const buildingWidth = Math.random() * (this.maxWidth - this.minWidth) + this.minWidth;
+                    const windowSeed = Math.random() < this.windowSeedChance ? Math.floor(Math.random() * colors.windowColors.length) : null;
+                    const building = new Building(currentX, buildingWidth, totalHeight, this.color, windowSeed, this.speedFactor);
+                    const baseGap = building.width * 0.4;
+                    const gap = (Math.random() * baseGap) / this.density;
+                    currentX += building.width + gap;
+                    building.draw(this.bufferCtx);
+                }
+            }
+
+            update(baseSpeed) {
+                const move = baseSpeed * this.speedFactor * settings.scrollDirection;
+                this.x = (this.x - move);
+                
+                if (this.x <= -this.bufferWidth) this.x += this.bufferWidth;
+                if (this.x >= this.bufferWidth) this.x -= this.bufferWidth;
+            }
+
+            draw() {
+                if (this.bufferCanvas.width <= 0) return;
+                let roundedX = Math.round(this.x);
+
+                ctx.drawImage(this.bufferCanvas, roundedX, 0);
+                ctx.drawImage(this.bufferCanvas, roundedX - this.bufferWidth, 0);
+                ctx.drawImage(this.bufferCanvas, roundedX + this.bufferWidth, 0);
+            }
+        }
+        
+        let backgroundState = { x: 0, gradient: null };
+        let skyState = { colors: [], stops: [] };
+        let starLayers = [];
+        let cars = [];
+        let lastTime = 0;
+
+        function drawBackground() {
+            if (!backgroundState.gradient) {
+                backgroundState.gradient = ctx.createLinearGradient(0, 0, width, 0);
+                for(let i=0; i<skyState.colors.length; i++) {
+                    backgroundState.gradient.addColorStop(skyState.stops[i], skyState.colors[i]);
+                }
+            }
+            backgroundState.x -= settings.baseSpeed * 0.05 * settings.scrollDirection;
+            if (backgroundState.x < -width) backgroundState.x += width;
+            if (backgroundState.x > 0) backgroundState.x -=width;
+
+
+            ctx.save();
+            ctx.translate(backgroundState.x, 0);
+            ctx.fillStyle = backgroundState.gradient;
+            ctx.fillRect(0, 0, width * 2, height);
+            ctx.restore();
+        }
+
+        let fogGradient;
+        function drawFog() {
+            if (!fogGradient) {
+                fogGradient = ctx.createLinearGradient(0, height, 0, height - 300);
+                fogGradient.addColorStop(0, `rgba(10, 5, 20, ${settings.fogDensity})`);
+                fogGradient.addColorStop(1, 'rgba(10, 5, 20, 0)');
+            }
+            ctx.fillStyle = fogGradient;
+            ctx.fillRect(0, height - 300, width, 300);
+        }
+
+        function setup(isResize = true) {
+            if (isResize) {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+
+            if (width <= 0 || height <= 0) return;
+            
+            backgroundState.gradient = null;
+            const skyColorPalette = ['#0d0d1f', '#1d1135', '#2c1a4b', '#3c1053', '#01183d'];
+            skyState.colors = [];
+            skyState.stops = [];
+            const numColors = 4;
+            const baseColor = skyColorPalette[Math.floor(Math.random() * skyColorPalette.length)];
+            skyState.colors.push(baseColor);
+            for (let i = 1; i < numColors; i++) {
+                skyState.colors.push(varyColor(skyState.colors[i-1]));
+            }
+            for (let i = 0; i < numColors; i++) {
+                skyState.stops.push(i / (numColors - 1));
+            }
+
+            fogGradient = null;
+            
+            const totalStars = settings.starCount;
+            starLayers = [
+                { stars: Array.from({ length: Math.floor(totalStars * 0.5) }, () => new Star(0.02)), update: function(s) {this.stars.forEach(star => star.update(s))}, draw: function() {this.stars.forEach(star => star.draw(ctx))} },
+                { stars: Array.from({ length: Math.floor(totalStars * 0.3) }, () => new Star(0.05)), update: function(s) {this.stars.forEach(star => star.update(s))}, draw: function() {this.stars.forEach(star => star.draw(ctx))} },
+                { stars: Array.from({ length: Math.floor(totalStars * 0.2) }, () => new Star(0.08)), update: function(s) {this.stars.forEach(star => star.update(s))}, draw: function() {this.stars.forEach(star => star.draw(ctx))} }
+            ];
+            
+            const skyColor = skyState.colors[Math.floor(skyState.colors.length / 2)];
+            const baseBuildingColor = '#05040f';
+            layers = [
+                // --- FIX --- Increased window seed chance for all layers for more lights
+                new Layer(0.1, blendColors(baseBuildingColor, skyColor, 0.65), 0.98, height * 0.3, height * 0.75, 30, 80, settings.density), 
+                new Layer(0.2, blendColors(baseBuildingColor, skyColor, 0.55), 0.99, height * 0.4, height * 0.8, 40, 100, settings.density),
+                new Layer(0.4, blendColors(baseBuildingColor, skyColor, 0.4), 0.99, height * 0.5, height * 0.85, 40, 120, settings.density),
+                new Layer(0.7, blendColors(baseBuildingColor, skyColor, 0.2), 1.0, height * 0.6, height * 0.9, 30, 130, settings.density),
+                new Layer(1.0, '#000000', 0.95, height * 0.4, height * 0.65, 40, 180, settings.density),
+            ];
+            
+            cars = Array.from({ length: settings.carCount }, () => new FlyingCar(layers.length));
+            cars.sort((a, b) => a.layer - b.layer);
+            
+            // --- FIX --- Set initial layer position to fill the screen correctly from the start
+            layers.forEach(l => l.x = -l.bufferWidth / 3 * 2);
+        }
+        
+        function animate(currentTime) {
+            if (width <= 0 || height <= 0) {
+                requestAnimationFrame(animate);
+                return;
+            }
+            if(!lastTime) lastTime = currentTime;
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            starLayers.forEach(l => l.update(settings.baseSpeed));
+            layers.forEach(l => l.update(settings.baseSpeed));
+            cars.forEach(car => car.update(deltaTime, settings.baseSpeed, layers[car.layer].speedFactor));
+
+            ctx.globalAlpha = 1.0;
+            ctx.clearRect(0, 0, width, height);
+            
+            drawBackground();
+            
+            ctx.save();
+            starLayers.forEach(l => l.draw());
+            ctx.restore();
+            
+            let carIndex = 0;
+            layers.forEach((layer, i) => {
+                layer.draw();
+                while(carIndex < cars.length && cars[carIndex].layer === i) {
+                    cars[carIndex].draw();
+                    carIndex++;
+                }
+            });
+            while(carIndex < cars.length) {
+                cars[carIndex].draw();
+                carIndex++;
+            }
+            
+            ctx.save();
+            drawFog();
+            ctx.restore();
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => setup(true));
+        
+        const menuToggle = document.getElementById('menu-toggle');
+        const settingsPanel = document.getElementById('settings-panel');
+        menuToggle.addEventListener('click', () => settingsPanel.classList.toggle('open'));
+        
+        function createSlider(id, settingKey, needsSetup, isFloat = true) {
+            const slider = document.getElementById(id);
+            const valueLabel = document.getElementById(`${id}-value`);
+            slider.addEventListener('input', (e) => {
+                const value = isFloat ? parseFloat(e.target.value) : parseInt(e.target.value);
+                settings[settingKey] = value;
+                valueLabel.textContent = isFloat ? value.toFixed(1) : value;
+                if(needsSetup) {
+                    clearTimeout(slider.debounce);
+                    slider.debounce = setTimeout(() => setup(false), 250);
+                } else if (settingKey === 'fogDensity') {
+                    fogGradient = null;
+                }
+            });
+        }
+        createSlider('speed', 'baseSpeed', false);
+        createSlider('density', 'density', true, true);
+        createSlider('complexity', 'complexity', true, false);
+        createSlider('starCount', 'starCount', true, false);
+        createSlider('fogDensity', 'fogDensity', false);
+        createSlider('glowIntensity', 'glowIntensity', true, false);
+        createSlider('carCount', 'carCount', true, false);
+
+
+        const scrollLeftBtn = document.getElementById('scroll-left');
+        const scrollRightBtn = document.getElementById('scroll-right');
+        scrollLeftBtn.addEventListener('click', () => {
+            settings.scrollDirection = 1;
+            scrollLeftBtn.classList.add('active');
+            scrollRightBtn.classList.remove('active');
+        });
+        scrollRightBtn.addEventListener('click', () => {
+            settings.scrollDirection = -1;
+            scrollRightBtn.classList.add('active');
+            scrollLeftBtn.classList.remove('active');
+        });
+        
+        setup(true);
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
